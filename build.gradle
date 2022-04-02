@@ -3,8 +3,7 @@ buildscript {
         gradlePluginPortal()
     }
     dependencies {
-        classpath 'com.netflix.nebula:nebula-project-plugin:5.0.+'
-        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.0'
+        classpath 'com.netflix.nebula:nebula-project-plugin:9.6.3'
     }
 }
 description='A gradle plugin that generates jboss-deployment-structure.xml based on the deploy configuration in the ear'
@@ -13,20 +12,20 @@ group = 'com.github.mamohr.gradle'
 apply plugin: 'nebula.contacts-base'
 apply plugin: 'nebula.integtest'
 apply plugin: 'groovy'
-apply plugin: 'idea'
-apply plugin: 'com.jfrog.bintray'
+apply plugin: 'eclipse'
+apply plugin: 'maven-publish'
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    compile gradleApi()
-    compile localGroovy()
-    testCompile 'junit:junit:4.12'
-    testCompile 'xmlunit:xmlunit:1.6'
+    implementation gradleApi()
+    implementation localGroovy()
+    testImplementation 'junit:junit:4.12'
+    testImplementation 'xmlunit:xmlunit:1.6'
 
-    testCompile 'com.netflix.nebula:nebula-test:5.0.+'
+    testImplementation 'com.netflix.nebula:nebula-test:10.2.0'
 }
 
 ext {
@@ -46,30 +45,27 @@ configurations.all {
 }
 
 
-bintray {
-    user = bintrayUser
-    key = bintrayKey
-    publications = ['mavenNebula']
-    publish = true
-    dryRun = false
-    pkg {
-        repo= 'maven'
-        desc = project.description
-        name = 'jboss-deployment-structure'
-        websiteUrl = "https://github.com/mamohr/${project.name}"
-        issueTrackerUrl = "https://github.com/mamohr/${project.name}/issues"
-        vcsUrl = "https://github.com/mamohr/${project.name}.git"
-        licenses = ['Apache-2.0']
-        labels = ['gradle', 'jboss', 'jboss-deployment-structure']
-        version {
-            attributes = ['gradle-plugin': 'com.github.mamohr.jboss-deployment-structure:com.github.mamohr.gradle:jboss-deployment-structure']
+task sourcesJar(type:Jar) {
+    classifier = "sources"
+    from sourceSets.main.allSource
+}
+
+task testsJar(type: Jar) {
+    classifier = 'tests'
+    from sourceSets.test.output + sourceSets.test.allSource
+}
+
+publishing {
+    repositories {
+        maven {
+            url localMavenRepository
+        }
+    }
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            artifact sourcesJar
+            artifact testsJar
         }
     }
 }
-
-contacts {
-    'mario_mohr@web.de' {
-        github 'mamohr'
-    }
-}
-
